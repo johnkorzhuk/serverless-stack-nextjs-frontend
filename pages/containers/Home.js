@@ -48,6 +48,13 @@ const Lander = () =>
   </LanderContainer>;
 
 class Home extends Component {
+  // getting creative! This is so that the notes get fetched after being redirected from
+  // the login, but not again.
+  componentDidMount() {
+    if (this.props.userToken !== null && this.props.notes.length === 0) {
+      this.props.getAllNotes(this.props.userToken);
+    }
+  }
   // in the tutorial this is done in componentDidMount, however, since cdm only fires once
   // the notes were never being loaded on initial render
   componentWillReceiveProps(nextProps: Props) {
