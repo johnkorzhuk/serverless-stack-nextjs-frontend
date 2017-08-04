@@ -3,6 +3,7 @@
 import React, { Component } from 'react';
 import styled from 'styled-components';
 import Router from 'next/router';
+import Link from 'next/link';
 import { PageHeader, ListGroup, ListGroupItem } from 'react-bootstrap';
 
 type Props = {
@@ -58,7 +59,7 @@ class Home extends Component {
   // in the tutorial this is done in componentDidMount, however, since cdm only fires once
   // the notes were never being loaded on initial render
   componentWillReceiveProps(nextProps: Props) {
-    if (this.props.userToken === null && nextProps.userToken !== null) {
+    if (this.props.userToken === null && nextProps.userToken !== null && this.props.notes.length === 0) {
       this.props.getAllNotes(nextProps.userToken);
     }
   }
@@ -74,19 +75,18 @@ class Home extends Component {
     return [{}].concat(notes).map(
       (note, i) =>
         i !== 0
-          ? <ListGroupItem
-              key={note.noteId}
-              href={`/notes/${note.noteId}`}
-              onClick={this.handleNoteClick}
-              header={note.content.trim().split('\n')[0]}
-            >
-              {`Created: ${new Date(note.createdAt).toLocaleString()}`}
-            </ListGroupItem>
-          : <ListGroupItem key="new" href="/notes/new" onClick={this.handleNoteClick}>
-              <h4>
-                <b>{'\uFF0B'}</b> Create a new note
-              </h4>
-            </ListGroupItem>
+          ? <Link as={`/notes/${note.noteId}`} href="/notes/:id" key={note.noteId}>
+              <ListGroupItem onClick={this.handleNoteClick} header={note.content.trim().split('\n')[0]}>
+                {`Created: ${new Date(note.createdAt).toLocaleString()}`}
+              </ListGroupItem>
+            </Link>
+          : <Link href="/notes/new" key="new">
+              <ListGroupItem onClick={this.handleNoteClick}>
+                <h4>
+                  <b>{'\uFF0B'}</b> Create a new note
+                </h4>
+              </ListGroupItem>
+            </Link>
     );
   }
 

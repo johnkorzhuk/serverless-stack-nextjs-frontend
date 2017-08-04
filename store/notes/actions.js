@@ -4,10 +4,11 @@ import { invokeApig } from '../../libs/awsLib';
 
 export const GET_ALL_NOTES_SUCCESS = 'notes/GET_ALL_NOTES_SUCCESS';
 export const GET_ALL_NOTES_LOADING = 'notes/GET_ALL_NOTES_LOADING';
+export const ADD_NEW_NOTE = 'notes/ADD_NEW_NOTE';
 
-export function getAllNotes(token: string) {
+export function getAllNotes(token: string): ThunkAction {
   // eslint-disable-next-line consistent-return
-  return async (dispatch: Function) => {
+  return async (dispatch: Function): PromiseAction => {
     dispatch({
       type: GET_ALL_NOTES_LOADING,
       payload: true
@@ -29,4 +30,12 @@ export function getAllNotes(token: string) {
       console.error(error);
     }
   };
+}
+
+export function addNewNote(note: Note): ThunkAction {
+  return (dispatch: Dispatch): Action =>
+    dispatch({
+      type: ADD_NEW_NOTE,
+      payload: note
+    });
 }

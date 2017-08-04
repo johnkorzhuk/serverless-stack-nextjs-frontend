@@ -1,6 +1,6 @@
 // @flow
 
-import { GET_ALL_NOTES_SUCCESS, GET_ALL_NOTES_LOADING } from './actions';
+import { GET_ALL_NOTES_SUCCESS, GET_ALL_NOTES_LOADING, ADD_NEW_NOTE } from './actions';
 
 type State = {
   loading: boolean,
@@ -24,6 +24,12 @@ export default (state: State = INITIAL_STATE, action: Action) => {
       return {
         ...state,
         loading: action.payload
+      };
+
+    case ADD_NEW_NOTE:
+      return {
+        ...state,
+        all: [...state.all, action.payload]
       };
 
     default:

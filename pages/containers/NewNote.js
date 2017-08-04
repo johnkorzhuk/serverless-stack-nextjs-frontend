@@ -26,7 +26,8 @@ class NewNote extends Component {
   };
 
   props: {
-    userToken: string
+    userToken: string,
+    addNewNote: Function
   };
 
   file = null;
@@ -70,10 +71,11 @@ class NewNote extends Component {
     try {
       const uploadedFilename = this.file ? (await s3Upload(this.file, this.props.userToken)).Location : null;
 
-      await this.createNote({
+      const note = await this.createNote({
         content: this.state.content,
         attachment: uploadedFilename
       });
+      this.props.addNewNote(note);
       Router.push('/');
     } catch (e) {
       // eslint-disable-next-line no-console
