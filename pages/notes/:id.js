@@ -6,18 +6,22 @@ import { FormGroup, FormControl, ControlLabel } from 'react-bootstrap';
 import styled from 'styled-components';
 import Router from 'next/router';
 
+import type { State, Note as NoteType } from '../../store/types';
+
 import Header from './../containers/Header';
 import LoaderButton from '../components/LoaderButton';
 
 import config from '../../config';
-import { invokeApig, s3Upload } from '../../libs/awsLib';
+import { invokeApig } from '../../libs/awsLib';
 import initStore from '../../store/store';
+import { updateNote } from '../../store/notes/actions';
 
 type Props = {
   id: string,
   userToken: string,
-  // eslint-disable-next-line no-use-before-define
-  notes: Array<Note>
+  notes: Array<NoteType>,
+  updateNote: Function,
+  uploading: boolean
 };
 
 const formatFilename = (str: string): string =>
@@ -31,6 +35,18 @@ const Form = styled.form`
     font-size: 24px;
   }
 `;
+
+const getNote = async (id: string, token: string): Promise<?NoteType> => {
+  if (id && token) {
+    try {
+      return await invokeApig({ path: `/notes/${id}` }, token);
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error(e);
+    }
+  }
+  return null;
+};
 
 class Note extends Component {
   static getInitialProps = async ({ req, pathname, asPath }) => {
@@ -50,59 +66,49 @@ class Note extends Component {
     return { id };
   };
 
-  state = {
-    note: Object,
+  state: {
+    note: NoteType | Object,
+    content: string,
+    loading: boolean,
+    deleting: boolean
+  } = {
+    note: {},
     content: '',
     loading: false,
     deleting: false
   };
 
   // Since our session is being stored on the client side, we have to use cdm for fetching a note
-  // because it's called only once with userToken equal to null. So when the user clickes the Link
-  // to this page this component's cdm fires, whereas when a user navigates to this page via the
-  // address bar cwrp will have the valid userToken in nextProps after withSession(Header) hoc
+  // because it's called only once with userToken equal to null on the client side. So when the user
+  // clickes the Link to this page this component's cdm fires, whereas when a user navigates to this page
+  // via the address bar cwrp will have the valid userToken in nextProps after withSession(Header) hoc
   // updates the store.
-  componentDidMount() {
+  // $FlowFixMe idk how to type this
+  async componentDidMount() {
     // no idea why flow is complaining about noteId not being a property of Note when it is
-    // $FlowFixMe
-    const note = this.props.notes.find(note => note.noteId === this.props.id);
+    let note = this.props.notes.find(note => note.noteId === this.props.id);
     // no need to make an api call if it's already in the store
-    if (note) {
-      this.setState({
-        note
-      });
+    if (!note) {
+      note = await getNote(this.props.id, this.props.userToken);
     } else {
-      this.getNote(this.props.id, this.props.userToken);
-    }
-  }
-
-  componentWillReceiveProps(nextProps: Props) {
-    if (this.props.userToken === null && nextProps.userToken !== null) {
-      this.getNote(nextProps.id, nextProps.userToken);
-    }
-  }
-
-  async getNote(id, token) {
-    try {
-      const note = await invokeApig({ path: `/notes/${id}` }, token);
       this.setState({
-        note
+        note,
+        content: note.content
       });
-    } catch (e) {
-      // eslint-disable-next-line no-console
-      console.error(e);
     }
   }
 
-  saveNote(note: Note) {
-    return invokeApig(
-      {
-        path: `/notes/${this.props.id}`,
-        method: 'PUT',
-        body: note
-      },
-      this.props.userToken
-    );
+  // $FlowFixMe idk how to type this
+  async componentWillReceiveProps(nextProps: Props) {
+    if (this.props.userToken === null && nextProps.userToken !== null) {
+      const note: ?NoteType = await getNote(nextProps.id, nextProps.userToken);
+      if (note) {
+        this.setState({
+          note,
+          content: note.content
+        });
+      }
+    }
   }
 
   handleDelete = async (event: SyntheticEvent) => {
@@ -121,8 +127,6 @@ class Note extends Component {
   };
 
   handleSubmit = async (event: SyntheticEvent) => {
-    let uploadedFilename;
-
     event.preventDefault();
 
     if (this.file && this.file.size > config.MAX_ATTACHMENT_SIZE) {
@@ -131,26 +135,20 @@ class Note extends Component {
       return;
     }
 
-    this.setState({ loading: true });
-
-    try {
-      if (this.file) {
-        uploadedFilename = (await s3Upload(this.file, this.props.userToken)).Location;
-      }
-
-      await this.saveNote({
+    await this.props.updateNote(
+      {
         ...this.state.note,
-        content: this.state.content,
-        attachment: uploadedFilename || this.state.note.attachment
-      });
-      Router.push('/');
-    } catch (e) {
-      // eslint-disable-next-line no-alert
-      alert(e);
-      console.log(e);
-      this.setState({ loading: false });
-    }
+        content: this.state.content
+      },
+      this.props.id,
+      this.file,
+      this.props.userToken
+    );
+
+    Router.push('/');
   };
+
+  props: Props;
 
   handleChange = event => {
     this.setState({
@@ -161,8 +159,6 @@ class Note extends Component {
   validateForm() {
     return this.state.content.length > 0;
   }
-
-  props: Props;
 
   file = null;
 
@@ -194,7 +190,7 @@ class Note extends Component {
                 bsSize="large"
                 disabled={!this.validateForm()}
                 type="submit"
-                loading={this.state.loading}
+                loading={this.props.uploading}
                 text="Save"
                 loadingText="Saving…"
               />
@@ -214,7 +210,12 @@ class Note extends Component {
   }
 }
 
-export default withRedux(initStore, (state: State) => ({
-  userToken: state.auth.userToken,
-  notes: state.notes.all
-}))(Note);
+export default withRedux(
+  initStore,
+  (state: State) => ({
+    userToken: state.auth.userToken,
+    notes: state.notes.all,
+    uploading: state.notes.uploading
+  }),
+  { updateNote }
+)(Note);

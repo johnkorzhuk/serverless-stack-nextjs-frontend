@@ -3,6 +3,8 @@
 import React from 'react';
 import withRedux from 'next-redux-wrapper';
 
+import type { Note, State } from '../store/types';
+
 import Header from './containers/Header';
 import Home from './containers/Home';
 

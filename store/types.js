@@ -4,15 +4,17 @@ export type Note = {
   userId: string,
   noteId: string,
   content: string,
-  attachment?: File,
+  attachment?: string,
   createdAt: number
 };
 
 declare type ActionType =
   | 'auth/SET_USER_TOKEN'
-  | 'notes/GET_ALL_NOTES_LOADING'
+  | 'notes/TOGGLE_LOADING'
   | 'notes/GET_ALL_NOTES_SUCCESS'
-  | 'notes/ADD_NEW_NOTE';
+  | 'notes/ADD_NEW_NOTE'
+  | 'notes/UPDATE_NOTE'
+  | 'notes/TOGGLE_UPLOADING';
 
 declare type ActionT<A: ActionType, P> = {|
   type: A,
@@ -21,9 +23,11 @@ declare type ActionT<A: ActionType, P> = {|
 
 export type Action =
   | ActionT<'auth/SET_USER_TOKEN', string>
-  | ActionT<'notes/GET_ALL_NOTES_LOADING', boolean>
+  | ActionT<'notes/TOGGLE_LOADING', boolean>
   | ActionT<'notes/GET_ALL_NOTES_SUCCESS', Array<Note>>
-  | ActionT<'notes/ADD_NEW_NOTE', Note>;
+  | ActionT<'notes/ADD_NEW_NOTE', Note>
+  | ActionT<'notes/UPDATE_NOTE', Array<Note>>
+  | ActionT<'notes/TOGGLE_UPLOADING', boolean>;
 
 export type State = {
   auth: {
@@ -31,6 +35,7 @@ export type State = {
   },
   notes: {
     loading: boolean,
+    uploading: boolean,
     all: Array<Note>
   }
 };
@@ -41,13 +46,3 @@ export type Dispatch = (action: Action | ThunkAction | PromiseAction) => any;
 export type ThunkAction = (dispatch: Dispatch, getState: GetState) => any;
 export type GetState = () => State;
 export type PromiseAction = Promise<Action>;
-
-export type Url = {
-  back: Function,
-  pathname: string,
-  push: Function,
-  pushTo: Function,
-  query: Object,
-  replace: Function,
-  replaceTo: Function
-};

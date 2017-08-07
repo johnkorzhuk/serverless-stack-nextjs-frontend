@@ -6,6 +6,8 @@ import { connect } from 'react-redux';
 import Router from 'next/router';
 import styled from 'styled-components';
 
+import type { State } from '../../store/types';
+
 import NavBar from '../components/NavBar';
 
 import withSession from '../hoc/withSession';
