@@ -6,18 +6,25 @@ import withRedux from 'next-redux-wrapper';
 import Header from './containers/Header';
 import Login from './containers/Login';
 
-import { updateUserToken } from '../store/auth/actions';
+import { logIn } from '../store/auth/actions';
 import initStore from '../store/store';
 
 type Props = {
-  updateUserToken: Function
+  logIn: Function,
+  loading: boolean
 };
 
-const LoginComp = ({ updateUserToken }: Props) =>
+const LoginComp = (props: Props) =>
   <Header>
-    <Login updateUserToken={updateUserToken} />
+    <Login {...props} />
   </Header>;
 
-export default withRedux(initStore, undefined, {
-  updateUserToken
-})(LoginComp);
+export default withRedux(
+  initStore,
+  state => ({
+    loading: state.auth.loading
+  }),
+  {
+    logIn
+  }
+)(LoginComp);

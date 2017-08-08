@@ -6,6 +6,8 @@ import thunkMiddleware from 'redux-thunk';
 // eslint-disable-next-line import/no-extraneous-dependencies
 import logger from 'redux-logger';
 
+import type { State } from './types';
+
 import rootReducer from './reducers';
 
 let middleware = [thunkMiddleware];

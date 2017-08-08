@@ -3,12 +3,9 @@
 import React, { Component } from 'react';
 import { FormGroup, FormControl, ControlLabel } from 'react-bootstrap';
 import styled from 'styled-components';
-import { CognitoUserPool, AuthenticationDetails, CognitoUser } from 'amazon-cognito-identity-js';
 import Router from 'next/router';
 
 import LoaderButton from '../components/LoaderButton';
-
-import config from '../../config';
 
 const Container = styled.div`
   @media all and (min-width: 480px) {
@@ -21,36 +18,15 @@ const Container = styled.div`
   }
 `;
 
-const login = (username, password) => {
-  const userPool = new CognitoUserPool({
-    UserPoolId: config.cognito.USER_POOL_ID,
-    ClientId: config.cognito.APP_CLIENT_ID
-  });
-  const authenticationData = {
-    Username: username,
-    Password: password
-  };
-
-  const user = new CognitoUser({ Username: username, Pool: userPool });
-  const authenticationDetails = new AuthenticationDetails(authenticationData);
-
-  return new Promise((resolve, reject) =>
-    user.authenticateUser(authenticationDetails, {
-      onSuccess: result => resolve(result.getIdToken().getJwtToken()),
-      onFailure: err => reject(err)
-    })
-  );
-};
-
 class Login extends Component {
   state = {
     username: '',
-    password: '',
-    loading: false
+    password: ''
   };
 
   props: {
-    updateUserToken: Function
+    logIn: Function,
+    loading: boolean
   };
 
   validateForm() {
@@ -65,21 +41,12 @@ class Login extends Component {
 
   handleSubmit = async (event: SyntheticEvent) => {
     event.preventDefault();
-    this.setState({ loading: true });
-
-    try {
-      const userToken = await login(this.state.username, this.state.password);
-      this.props.updateUserToken(userToken);
-      Router.push('/');
-    } catch (e) {
-      // eslint-disable-next-line no-console
-      console.error(e);
-      this.setState({ loading: false });
-    }
+    await this.props.logIn(this.state.username, this.state.password);
+    Router.push('/');
   };
 
   render() {
-    const { loading } = this.state;
+    const { loading } = this.props;
     return (
       <Container>
         <form onSubmit={this.handleSubmit}>

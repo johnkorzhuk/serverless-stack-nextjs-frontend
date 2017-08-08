@@ -11,7 +11,7 @@ export const UPDATE_NOTE = 'notes/UPDATE_NOTE';
 export const TOGGLE_UPLOADING = 'notes/TOGGLE_UPLOADING';
 
 export function getAllNotes(token: string): ThunkAction {
-  return async (dispatch: Function) => {
+  return async (dispatch: Dispatch) => {
     dispatch({
       type: TOGGLE_LOADING,
       payload: true

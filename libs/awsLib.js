@@ -1,8 +1,34 @@
 // @flow
 import AWS from 'aws-sdk';
-import config from '../config';
+import { CognitoUserPool, AuthenticationDetails, CognitoUser } from 'amazon-cognito-identity-js';
 
 import sigV4Client from './sigV4Client';
+
+import config from '../config';
+
+function getCurrentUser() {
+  const userPool = new CognitoUserPool({
+    UserPoolId: config.cognito.USER_POOL_ID,
+    ClientId: config.cognito.APP_CLIENT_ID
+  });
+  return userPool.getCurrentUser();
+}
+
+export function getUserToken() {
+  const currentUser = getCurrentUser();
+
+  if (currentUser) {
+    return new Promise((resolve, reject) => {
+      currentUser.getSession((err, session) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        resolve(session.getIdToken().getJwtToken());
+      });
+    });
+  }
+}
 
 // eslint-disable-next-line import/prefer-default-export
 export function getAwsCredentials(userToken: string): ?Promise<*> {
@@ -91,4 +117,37 @@ export async function s3Upload(file: File, userToken: string): Promise<*> {
       ACL: 'public-read'
     })
     .promise();
+}
+
+export function login(username: string, password: string) {
+  const userPool = new CognitoUserPool({
+    UserPoolId: config.cognito.USER_POOL_ID,
+    ClientId: config.cognito.APP_CLIENT_ID
+  });
+  const authenticationData = {
+    Username: username,
+    Password: password
+  };
+
+  const user = new CognitoUser({ Username: username, Pool: userPool });
+  const authenticationDetails = new AuthenticationDetails(authenticationData);
+
+  return new Promise((resolve, reject) =>
+    user.authenticateUser(authenticationDetails, {
+      onSuccess: result => resolve(result.getIdToken().getJwtToken()),
+      onFailure: err => reject(err)
+    })
+  );
+}
+
+export function logout() {
+  const currentUser = getCurrentUser();
+
+  if (currentUser !== null) {
+    currentUser.signOut();
+  }
+
+  if (AWS.config.credentials) {
+    AWS.config.credentials.clearCachedId();
+  }
 }

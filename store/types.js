@@ -9,7 +9,10 @@ export type Note = {
 };
 
 declare type ActionType =
+  | 'root/USER_LOGOUT'
   | 'auth/SET_USER_TOKEN'
+  | 'auth/SET_LOGGED_IN_EMAIL'
+  | 'auth/TOGGLE_LOADING'
   | 'notes/TOGGLE_LOADING'
   | 'notes/GET_ALL_NOTES_SUCCESS'
   | 'notes/ADD_NEW_NOTE'
@@ -18,11 +21,14 @@ declare type ActionType =
 
 declare type ActionT<A: ActionType, P> = {|
   type: A,
-  payload: P
+  payload?: P
 |};
 
 export type Action =
-  | ActionT<'auth/SET_USER_TOKEN', string>
+  | ActionT<'root/USER_LOGOUT', null>
+  | ActionT<'auth/SET_USER_TOKEN', ?string>
+  | ActionT<'auth/SET_LOGGED_IN_EMAIL', string>
+  | ActionT<'auth/TOGGLE_LOADING', boolean>
   | ActionT<'notes/TOGGLE_LOADING', boolean>
   | ActionT<'notes/GET_ALL_NOTES_SUCCESS', Array<Note>>
   | ActionT<'notes/ADD_NEW_NOTE', Note>
@@ -31,7 +37,8 @@ export type Action =
 
 export type State = {
   auth: {
-    userToken: string
+    userToken: ?string,
+    loading: false
   },
   notes: {
     loading: boolean,

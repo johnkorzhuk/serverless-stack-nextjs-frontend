@@ -1,13 +1,17 @@
 // @flow
 
-import { SET_USER_TOKEN } from './actions';
+import type { Action } from '../types';
+
+import { SET_USER_TOKEN, TOGGLE_LOADING } from './actions';
 
 type State = {
-  userToken: string | null
+  userToken: ?string,
+  loading: boolean
 };
 
 const INITIAL_STATE = {
-  userToken: null
+  userToken: null,
+  loading: false
 };
 
 export default (state: State = INITIAL_STATE, action: Action) => {
@@ -16,6 +20,12 @@ export default (state: State = INITIAL_STATE, action: Action) => {
       return {
         ...state,
         userToken: action.payload
+      };
+
+    case TOGGLE_LOADING:
+      return {
+        ...state,
+        loading: action.payload
       };
 
     default:

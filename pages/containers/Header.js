@@ -11,7 +11,7 @@ import type { State } from '../../store/types';
 import NavBar from '../components/NavBar';
 
 import withSession from '../hoc/withSession';
-import { updateUserToken } from '../../store/auth/actions';
+import { logOut, updateUserToken } from '../../store/auth/actions';
 
 const App = styled.div`margin-top: 15px;`;
 
@@ -34,9 +34,11 @@ class Header extends Component {
   props: {
     children: Children,
     userToken: string,
-    updateUserToken: Function,
     loading: boolean,
-    logOut: Function
+    logOut: Function,
+    // gets passed to withSession
+    // eslint-disable-next-line react/no-unused-prop-types
+    updateUserToken: Function
   };
 
   handleNavLink = (event: SyntheticEvent & { currentTarget: HTMLLinkElement }) => {
@@ -46,16 +48,12 @@ class Header extends Component {
 
   handleLogout = () => {
     this.props.logOut();
-
-    this.props.updateUserToken(null);
-
     Router.push('/login');
   };
 
   render() {
     const { children, userToken, loading } = this.props;
     const { pathname } = this.state;
-
     return (
       // this is fine
       // $FlowFixMe
@@ -73,6 +71,7 @@ export default connect(
     userToken: state.auth.userToken
   }),
   {
+    logOut,
     updateUserToken
   }
 )(withSession(Header));
